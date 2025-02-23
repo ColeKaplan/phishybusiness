@@ -129,6 +129,8 @@ for t_id, transcript in enumerate(transcripts):
 
 df_all = pd.DataFrame(all_data)
 
+df_all.to_csv("scam_transcripts.csv", index=False)
+
 # --- Compute Polarity for Each Message ---
 def compute_polarity(text):
     blob = TextBlob(text)

@@ -16,6 +16,7 @@ export default function Analysis() {
     const [selectedScenarios, setSelectedScenarios] = useState<string[]>(["All"]);
     const [selectedNames, setSelectedNames] = useState<string[]>(["All"]);
     const [selectedChart, setSelectedChart] = useState("Scenario Frequency");
+    const [selectedPolarityChart, setSelectedPolarityChart] = useState("Average Polarity Comparison");
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
 
@@ -50,7 +51,6 @@ export default function Analysis() {
             });
     }, []);
 
-    // Filter data based on selected scenarios and names
     const filteredData = data.filter((row) => {
         const scenarioMatch =
             selectedScenarios.includes("All") ||
@@ -60,14 +60,12 @@ export default function Analysis() {
         return scenarioMatch && nameMatch;
     });
 
-    // Pagination logic
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
     const paginatedData = filteredData.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
     );
 
-    // Prepare chart data
     const scenarioCounts = filteredData.reduce((acc: Record<string, number>, row) => {
         const scenario = row["Phishing Scenario"];
         acc[scenario] = (acc[scenario] || 0) + 1;
@@ -84,6 +82,10 @@ export default function Analysis() {
         return acc;
     }, {});
 
+    const polarityValues = filteredData
+        .map((row) => parseFloat(row["Polarity"])) // Assumes "Polarity" column exists
+        .filter((n) => !isNaN(n));
+
     // Convert options for react-select
     const scenarioOptions = [
         { value: "All", label: "🌍 All Scenarios" },
@@ -98,6 +100,11 @@ export default function Analysis() {
         { value: "Call Length Distribution", label: "📞 Call Length Distribution" },
         { value: "Response Type Distribution", label: "🎭 Response Type Distribution" },
         { value: "Top Responses", label: "💬 Top Responses" },
+    ];
+    const polarityChartOptions = [
+        { value: "Average Polarity Comparison", label: "⚖️ Average Polarity Comparison" },
+        { value: "Scammer Polarity Distribution", label: "🕵️‍♂️ Scammer Polarity Distribution" },
+        { value: "Scammer Polarity Box Plots", label: "📊 Scammer Polarity Box Plots" },
     ];
 
     const renderChart = () => {
@@ -210,6 +217,34 @@ export default function Analysis() {
         }
     };
 
+    const renderPolarityChart = () => {
+        switch (selectedPolarityChart) {
+            case "Average Polarity Comparison":
+                return (
+                    <div>
+                        {/* Replace with PNG */}
+                        <img src="/AveragePolarityComparison.png" alt="Average Polarity Comparison" className="w-full" />
+                    </div>
+                );
+            case "Scammer Polarity Distribution":
+                return (
+                    <div>
+                        {/* Replace with PNG */}
+                        <img src="/ScammerPolaritDistribution.png" alt="Scammer Polarity Distribution" className="w-full" />
+                    </div>
+                );
+            case "Scammer Polarity Box Plots":
+                return (
+                    <div>
+                        {/* Replace with PNG */}
+                        <img src="/ScammerPolarityBox.png" alt="Scammer Polarity Box Plots" className="w-full" />
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className="flex flex-col items-center min-h-screen bg-gray-100 p-8 space-y-6">
             <h1 className="text-3xl font-bold text-gray-800 mt-10">
@@ -253,14 +288,34 @@ export default function Analysis() {
                     }
                     className="mt-2"
                 />
+
+                <label className="block text-gray-700 font-semibold">Select Polarity Chart:</label>
+                <SelectComponent
+                    options={polarityChartOptions}
+                    placeholder="Choose a polarity chart..."
+                    onChange={(selected : any) =>
+                        setSelectedPolarityChart(selected?.value || "Average Polarity Comparison")
+                    }
+                    className="mt-2"
+                />
             </div>
 
-            {/* Graph */}
+            {/* Graph for selected chart */}
             <div className="w-full max-w-4xl bg-white p-6 rounded-xl shadow-lg">
                 {loading ? (
                     <p className="text-gray-500">Loading CSV data...</p>
                 ) : (
                     renderChart()
+                )}
+            </div>
+
+            {/* Polarity Analysis as Separate Graph */}
+            <div className="w-full max-w-4xl bg-white p-6 rounded-xl shadow-lg mt-6">
+                <h2 className="text-2xl font-semibold mb-4">🔮 Polarity Analysis</h2>
+                {loading ? (
+                    <p className="text-gray-500">Loading CSV data...</p>
+                ) : (
+                    renderPolarityChart()
                 )}
             </div>
 
@@ -289,6 +344,7 @@ export default function Analysis() {
                         </tbody>
                     </table>
                 </div>
+
                 {/* Pagination Controls */}
                 <div className="flex justify-between items-center mt-4">
                     <button

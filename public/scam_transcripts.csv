@@ -1,0 +1,95 @@
+transcript_id,speaker,message
+0,transcript #1,
+0,scammer,"Hello, this is Officer Daniels from the fraud department. There has been suspicious activity on your account."
+0,victim,Suspicious activity? What kind?
+0,scammer,We detected multiple failed login attempts from an unrecognized device. We need to verify your identity.
+0,victim,"Oh no, what do I need to do?"
+0,scammer,Please confirm your full name and last four digits of your Social Security Number.
+0,victim,"My name is John Doe, and the last four of my SSN are 1234."
+0,scammer,"Thank you. Now, I need to reset your password. Please provide your old password."
+0,victim,I don’t feel comfortable sharing that.
+0,scammer,"Without it, we can’t secure your account. Do you want to risk unauthorized access?"
+0,victim,Let me call my bank first.
+0,scammer,That’s not necessary. I am your bank’s fraud investigator.
+0,victim,I’ll check anyway. *[victim hangs up]*
+1,transcript #2,
+1,scammer,"This is Amazon Security. Someone tried to make a $1,200 purchase on your account."
+1,victim,What?! I didn’t authorize that!
+1,scammer,We thought so. We’ve frozen your account temporarily. Please confirm your email and billing address so we can remove the fraudulent transaction.
+1,victim,"My email is janesmith@example.com, and my billing address is 123 Oak Street, Springfield."
+1,scammer,"Thank you. Now, just verify your credit card number so we can process the refund."
+1,victim,Wait… why do you need my card number if you already have it?
+1,scammer,"For verification. If we don’t confirm, the charge may go through."
+1,victim,I’ll check my Amazon account first. *[victim refuses further information]*
+2,transcript #3,
+2,scammer,"Good afternoon, this is Michael from Microsoft Support. We detected a virus on your computer."
+2,victim,A virus? That sounds bad.
+2,scammer,"Yes, your system has been compromised. Hackers can steal your personal data. We need to install a security patch."
+2,victim,Okay… what do I need to do?
+2,scammer,"Download remote access software so I can remove the virus. Then, provide me with your system’s admin password."
+2,victim,I don’t know if I should do that.
+2,scammer,"If you don’t, hackers may steal your passwords and banking details."
+2,victim,Let me check with my IT guy first.
+2,scammer,Your IT guy doesn’t have the specialized Microsoft tools I do.
+2,victim,I’ll take my chances. *[victim hangs up]*
+3,transcript #4,
+3,scammer,"Hello, this is Bank of America. There has been a suspicious transaction of $950 on your account."
+3,victim,That’s not mine! What can I do?
+3,scammer,"We need to cancel it. First, confirm your online banking username and password."
+3,victim,I don’t think I should do that.
+3,scammer,"Without verification, we cannot stop the transaction. You might lose the money."
+3,victim,Let me log in to my account and check.
+3,scammer,"If you log in now, the hacker may see your activity."
+3,victim,I’ll call the bank directly. *[victim ends call]*
+4,transcript #5,
+4,scammer,"Congratulations! You’ve won a $1,000 Walmart gift card."
+4,victim,Really? I don’t remember entering a contest.
+4,scammer,Your number was randomly selected! You just need to cover a $4.99 shipping fee.
+4,victim,That sounds suspicious.
+4,scammer,Many customers have received their prize. We just need your credit card details for the shipping charge.
+4,victim,I don’t think I’ll do that.
+4,scammer,Are you sure? This offer expires in 10 minutes.
+4,victim,I’ll pass. *[victim declines]*
+5,transcript #6,
+5,scammer,This is Sarah from PayPal. A $500 transfer was attempted from your account.
+5,victim,I didn’t authorize that!
+5,scammer,"I can cancel it, but I need to verify your account information."
+5,victim,What do you need?
+5,scammer,Just your email and PayPal password.
+5,victim,I’ll check my account first.
+5,scammer,You might be locked out by then.
+5,victim,I’ll take my chances. *[victim logs into PayPal and sees no suspicious activity]*
+6,transcript #7,
+6,scammer,This is the IRS. You have unpaid taxes and will be arrested if you don’t resolve this now.
+6,victim,What?! I don’t want to go to jail.
+6,scammer,We can settle this if you make a payment right now using gift cards.
+6,victim,The IRS takes gift cards?
+6,scammer,"Yes, it’s our emergency processing system."
+6,victim,I don’t believe you. *[victim hangs up]*
+7,transcript #8,
+7,scammer,"Hi, this is Apple Support. Your iCloud account has been breached."
+7,victim,That’s scary.
+7,scammer,We need to secure your account. Please provide your Apple ID and password.
+7,victim,I’ll reset my password myself.
+7,scammer,That might not work. I need to do it from my end.
+7,victim,I’ll check with Apple first.
+7,scammer,There’s no time. Hackers are already in your account.
+7,victim,I’ll take the risk. *[victim refuses]*
+8,transcript #9,
+8,scammer,This is FedEx. A package under your name was intercepted due to suspicious contents.
+8,victim,What package?
+8,scammer,"Authorities are investigating, but you can clear your name by verifying your identity."
+8,victim,What do you need?
+8,scammer,"Your full name, date of birth, and Social Security Number."
+8,victim,I never ordered anything.
+8,scammer,Maybe someone used your identity.
+8,victim,I’ll check with FedEx first. *[victim refuses]*
+9,transcript #10,
+9,scammer,This is John from the FBI. You are under investigation for money laundering.
+9,victim,What?! I didn’t do anything wrong!
+9,scammer,We need to confirm your identity before taking further action.
+9,victim,How?
+9,scammer,Provide your Social Security Number and bank account details.
+9,victim,I think I need a lawyer.
+9,scammer,That will make you look guilty.
+9,victim,I don’t care. *[victim hangs up]*
