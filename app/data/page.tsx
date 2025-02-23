@@ -302,6 +302,7 @@ export default function Analysis() {
 
             {/* Graph for selected chart */}
             <div className="w-full max-w-4xl bg-white p-6 rounded-xl shadow-lg">
+                <h2 className="text-2xl font-semibold mb-4 text-black"> 🌍 Aggregate Graph </h2>
                 {loading ? (
                     <p className="text-gray-500">Loading CSV data...</p>
                 ) : (
@@ -311,7 +312,7 @@ export default function Analysis() {
 
             {/* Polarity Analysis as Separate Graph */}
             <div className="w-full max-w-4xl bg-white p-6 rounded-xl shadow-lg mt-6">
-                <h2 className="text-2xl font-semibold mb-4">🔮 Polarity Analysis</h2>
+                <h2 className="text-2xl font-semibold mb-4 text-black">🔮 Polarity Analysis</h2>
                 {loading ? (
                     <p className="text-gray-500">Loading CSV data...</p>
                 ) : (
@@ -321,7 +322,7 @@ export default function Analysis() {
 
             {/* Paginated Table */}
             <div className="w-full max-w-4xl bg-white p-6 rounded-xl shadow-lg">
-                <h2 className="text-lg font-semibold mb-2">📋 Filtered Data</h2>
+                <h2 className="text-lg font-semibold mb-2 text-black">📋 Filtered Data</h2>
                 <div className="overflow-x-auto">
                     <table className="min-w-full bg-white border border-gray-300 text-black">
                         <thead>
