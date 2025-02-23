@@ -17,11 +17,15 @@ export default function Analysis() {
     const [selectedScenarios, setSelectedScenarios] = useState<string[]>(["All"]);
     const [selectedNames, setSelectedNames] = useState<string[]>(["All"]);
     const [selectedChart, setSelectedChart] = useState("Scenario Frequency");
-    const [selectedPolarityChart, setSelectedPolarityChart] = useState("Average Polarity Comparison");
+    const [selectedPolarityChart, setSelectedPolarityChart] = useState("Sentiment Analysis");
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
 
+    // New state to hold JSON call data
+    const [jsonData, setJsonData] = useState<any[]>([]);
+
     useEffect(() => {
+        // Fetch CSV data as before
         fetch(csvPath)
             .then((response) => response.text())
             .then((csvText) => {
@@ -33,12 +37,10 @@ export default function Analysis() {
                         setLoading(false);
 
                         const uniqueScenarios = [
-                            ...new Set(
-                                results.data.map((row: any) => row["Phishing Scenario"])
-                            ),
+                            ...new Set(results.data.map((row: any) => row["Phishing Scenario"]))
                         ].filter(Boolean);
                         const uniqueNames = [
-                            ...new Set(results.data.map((row: any) => row["Name"])),
+                            ...new Set(results.data.map((row: any) => row["Name"]))
                         ].filter(Boolean);
 
                         setScenarios(uniqueScenarios);
@@ -49,6 +51,16 @@ export default function Analysis() {
             .catch((error) => {
                 console.error("Error loading CSV:", error);
                 setLoading(false);
+            });
+
+        // Fetch JSON call data for sentiment and keyword analysis
+        fetch("/callData.json")
+            .then((response) => response.json())
+            .then((json) => {
+                setJsonData(json);
+            })
+            .catch((error) => {
+                console.error("Error loading JSON:", error);
             });
     }, []);
 
@@ -83,10 +95,6 @@ export default function Analysis() {
         return acc;
     }, {});
 
-    const polarityValues = filteredData
-        .map((row) => parseFloat(row["Polarity"])) // Assumes "Polarity" column exists
-        .filter((n) => !isNaN(n));
-
     // Convert options for react-select
     const scenarioOptions = [
         { value: "All", label: "🌍 All Scenarios" },
@@ -103,9 +111,8 @@ export default function Analysis() {
         { value: "Top Responses", label: "💬 Top Responses" },
     ];
     const polarityChartOptions = [
-        { value: "Average Polarity Comparison", label: "⚖️ Average Polarity Comparison" },
-        { value: "Scammer Polarity Distribution", label: "🕵️‍♂️ Scammer Polarity Distribution" },
-        { value: "Scammer Polarity Box Plots", label: "📊 Scammer Polarity Box Plots" },
+        { value: "Sentiment Analysis", label: "💬 Sentiment Analysis" },
+        { value: "Keyword Frequency", label: "🔑 Keyword Frequency" },
     ];
 
     const renderChart = () => {
@@ -137,15 +144,9 @@ export default function Analysis() {
                             yaxis: { title: "Count", showline: true, showgrid: true, zeroline: true },
                             bargap: 0.3,
                             autosize: true,
-                            margin: {
-                                l: 50,
-                                r: 50,
-                                b: 100,
-                                t: 50,
-                                pad: 4
-                            },
+                            margin: { l: 50, r: 50, b: 100, t: 50, pad: 4 },
                         }}
-                        style={{ width: '100%', height: '100%' }}
+                        style={{ width: "100%", height: "100%" }}
                         useResizeHandler={true}
                     />
                 );
@@ -228,29 +229,91 @@ export default function Analysis() {
         }
     };
 
+    // New function to render JSON-based graphs for polarity analysis
     const renderPolarityChart = () => {
+        if (!jsonData || jsonData.length === 0) return <div>Loading JSON charts...</div>;
+
         switch (selectedPolarityChart) {
-            case "Average Polarity Comparison":
+            case "Sentiment Analysis": {
+                // Calculate frequency counts of user sentiment from JSON call data
+                const sentimentCounts = jsonData.reduce((acc: Record<string, number>, call) => {
+                    const sentiment = call.call_analysis?.user_sentiment;
+                    if (sentiment) {
+                        acc[sentiment] = (acc[sentiment] || 0) + 1;
+                    }
+                    return acc;
+                }, {});
+
+                const sentiments = Object.keys(sentimentCounts);
+                const counts = sentiments.map((sent) => sentimentCounts[sent]);
+
                 return (
-                    <div>
-                        {/* Replace with PNG */}
-                        <img src="/AveragePolarityComparison.png" alt="Average Polarity Comparison" className="w-full" />
-                    </div>
+                    <Plot
+                        data={[
+                            {
+                                type: "bar",
+                                x: sentiments,
+                                y: counts,
+                                marker: { color: "#36A2EB" },
+                            },
+                        ]}
+                        layout={{
+                            title: "Sentiment Analysis",
+                            xaxis: { title: "Sentiment" },
+                            yaxis: { title: "Count" },
+                            margin: { l: 50, r: 50, b: 50, t: 50 },
+                        }}
+                        style={{ width: "100%", height: "100%" }}
+                        useResizeHandler={true}
+                    />
                 );
-            case "Scammer Polarity Distribution":
+            }
+            case "Keyword Frequency": {
+                // Aggregate all transcripts from JSON call data
+                const allText = jsonData.map((call) => call.transcript).join(" ");
+                // Clean the text by removing punctuation and converting to lowercase
+                const cleanedText = allText.replace(/[^\w\s]/gi, "").toLowerCase();
+                const words = cleanedText.split(/\s+/);
+                // Define simple stop words to ignore
+                const stopWords = new Set([
+                    "the", "and", "for", "a", "an", "of", "to", "in", "is", "it", "that",
+                    "this", "with", "as", "on", "was", "but", "are", "i", "you", "we", "they",
+                    "be", "have", "has", "or"
+                ]);
+                const wordCounts: Record<string, number> = {};
+                words.forEach((word) => {
+                    if (word && !stopWords.has(word)) {
+                        wordCounts[word] = (wordCounts[word] || 0) + 1;
+                    }
+                });
+                // Get top 10 most frequent words
+                const sortedWords = Object.entries(wordCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10);
+                const topWords = sortedWords.map(([word]) => word);
+                const topCounts = sortedWords.map(([, count]) => count);
+
                 return (
-                    <div>
-                        {/* Replace with PNG */}
-                        <img src="/ScammerPolaritDistribution.png" alt="Scammer Polarity Distribution" className="w-full" />
-                    </div>
+                    <Plot
+                        data={[
+                            {
+                                type: "bar",
+                                x: topWords,
+                                y: topCounts,
+                                marker: { color: "#FF5733" },
+                            },
+                        ]}
+                        layout={{
+                            title: "Keyword Frequency",
+                            xaxis: { title: "Keywords" },
+                            yaxis: { title: "Frequency" },
+                            margin: { l: 50, r: 50, b: 100, t: 50 },
+                        }}
+                        style={{ width: "100%", height: "100%" }}
+                        useResizeHandler={true}
+                    />
                 );
-            case "Scammer Polarity Box Plots":
-                return (
-                    <div>
-                        {/* Replace with PNG */}
-                        <img src="/ScammerPolarityBox.png" alt="Scammer Polarity Box Plots" className="w-full" />
-                    </div>
-                );
+            }
             default:
                 return null;
         }
@@ -265,9 +328,9 @@ export default function Analysis() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-12"
                 >
-                    <span className="px-4 py-1.5 text-sm font-medium rounded-full bg-blue-50 text-blue-600 inline-block border border-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.2)]">
-                        Data Analysis
-                    </span>
+          <span className="px-4 py-1.5 text-sm font-medium rounded-full bg-blue-50 text-blue-600 inline-block border border-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.2)]">
+            Data Analysis
+          </span>
                     <h1 className="text-4xl md:text-6xl font-bold mt-6 bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-transparent leading-[1.1] md:leading-[1.2] pb-1">
                         Phishing Call Analytics
                     </h1>
@@ -327,7 +390,7 @@ export default function Analysis() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Polarity Analysis</label>
                                 <SelectComponent
                                     options={polarityChartOptions}
-                                    onChange={(selected: any) => setSelectedPolarityChart(selected?.value || "Average Polarity Comparison")}
+                                    onChange={(selected: any) => setSelectedPolarityChart(selected?.value || "Sentiment Analysis")}
                                 />
                             </div>
                         </div>
@@ -406,25 +469,19 @@ export default function Analysis() {
                             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
                             className={`px-4 py-2 text-white rounded ${
-                                currentPage === 1
-                                    ? "bg-gray-400"
-                                    : "bg-blue-500 hover:bg-blue-700"
+                                currentPage === 1 ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-700"
                             }`}
                         >
                             ◀ Previous
                         </button>
                         <span className="text-gray-700">
-                            Page {currentPage} of {totalPages}
-                        </span>
+              Page {currentPage} of {totalPages}
+            </span>
                         <button
-                            onClick={() =>
-                                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                            }
+                            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages}
                             className={`px-4 py-2 text-white rounded ${
-                                currentPage === totalPages
-                                    ? "bg-gray-400"
-                                    : "bg-blue-500 hover:bg-blue-700"
+                                currentPage === totalPages ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-700"
                             }`}
                         >
                             Next ▶
