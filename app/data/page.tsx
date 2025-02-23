@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Papa from "papaparse";
+import { motion } from "framer-motion";
 
 const csvPath = "/synthetic_calls_scenarios.csv";
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -135,7 +136,17 @@ export default function Analysis() {
                             },
                             yaxis: { title: "Count", showline: true, showgrid: true, zeroline: true },
                             bargap: 0.3,
+                            autosize: true,
+                            margin: {
+                                l: 50,
+                                r: 50,
+                                b: 100,
+                                t: 50,
+                                pad: 4
+                            },
                         }}
+                        style={{ width: '100%', height: '100%' }}
+                        useResizeHandler={true}
                     />
                 );
             }
@@ -246,136 +257,180 @@ export default function Analysis() {
     };
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-gray-100 p-8 space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800 mt-10">
-                📊 Phishing Scenario Analysis
-            </h1>
-
-            {/* Filters */}
-            <div className="w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg flex flex-col space-y-4">
-                <label className="block text-gray-700 font-semibold">Filter by Scenario:</label>
-                <SelectComponent
-                    options={scenarioOptions}
-                    isMulti
-                    value={scenarioOptions.filter((opt) => selectedScenarios.includes(opt.value))}
-                    placeholder="Select scenarios..."
-                    onChange={(selected : any) => {
-                        const values = selected.map((opt : any) => opt.value);
-                        setSelectedScenarios(values.includes("All") ? ["All"] : values);
-                    }}
-                    className="mt-2"
-                />
-
-                <label className="block text-gray-700 font-semibold">Filter by Name:</label>
-                <SelectComponent
-                    options={nameOptions}
-                    isMulti
-                    value={nameOptions.filter((opt) => selectedNames.includes(opt.value))}
-                    placeholder="Select names..."
-                    onChange={(selected : any) => {
-                        const values = selected.map((opt : any) => opt.value);
-                        setSelectedNames(values.includes("All") ? ["All"] : values);
-                    }}
-                    className="mt-2"
-                />
-
-                <label className="block text-gray-700 font-semibold">Select Chart:</label>
-                <SelectComponent
-                    options={chartOptions}
-                    placeholder="Choose a chart..."
-                    onChange={(selected : any) =>
-                        setSelectedChart(selected?.value || "Scenario Frequency")
-                    }
-                    className="mt-2"
-                />
-
-                <label className="block text-gray-700 font-semibold">Select Polarity Chart:</label>
-                <SelectComponent
-                    options={polarityChartOptions}
-                    placeholder="Choose a polarity chart..."
-                    onChange={(selected : any) =>
-                        setSelectedPolarityChart(selected?.value || "Average Polarity Comparison")
-                    }
-                    className="mt-2"
-                />
-            </div>
-
-            {/* Graph for selected chart */}
-            <div className="w-full max-w-4xl bg-white p-6 rounded-xl shadow-lg">
-                <h2 className="text-2xl font-semibold mb-4 text-black"> 🌍 Aggregate Graph </h2>
-                {loading ? (
-                    <p className="text-gray-500">Loading CSV data...</p>
-                ) : (
-                    renderChart()
-                )}
-            </div>
-
-            {/* Polarity Analysis as Separate Graph */}
-            <div className="w-full max-w-4xl bg-white p-6 rounded-xl shadow-lg mt-6">
-                <h2 className="text-2xl font-semibold mb-4 text-black">🔮 Polarity Analysis</h2>
-                {loading ? (
-                    <p className="text-gray-500">Loading CSV data...</p>
-                ) : (
-                    renderPolarityChart()
-                )}
-            </div>
-
-            {/* Paginated Table */}
-            <div className="w-full max-w-4xl bg-white p-6 rounded-xl shadow-lg">
-                <h2 className="text-lg font-semibold mb-2 text-black">📋 Filtered Data</h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white border border-gray-300 text-black">
-                        <thead>
-                        <tr className="bg-gray-200 text-black">
-                            <th className="border p-2">Name</th>
-                            <th className="border p-2">Scenario</th>
-                            <th className="border p-2">Call Length (s)</th>
-                            <th className="border p-2">Response</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {paginatedData.map((row, index) => (
-                            <tr key={index} className="border text-black">
-                                <td className="border p-2">{row["Name"]}</td>
-                                <td className="border p-2">{row["Phishing Scenario"]}</td>
-                                <td className="border p-2">{row["Call Length (s)"]}</td>
-                                <td className="border p-2">{row["Response Description"]}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination Controls */}
-                <div className="flex justify-between items-center mt-4">
-                    <button
-                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className={`px-4 py-2 text-white rounded ${
-                            currentPage === 1
-                                ? "bg-gray-400"
-                                : "bg-blue-500 hover:bg-blue-700"
-                        }`}
-                    >
-                        ◀ Previous
-                    </button>
-                    <span className="text-gray-700">
-                        Page {currentPage} of {totalPages}
+        <div className="min-h-screen bg-white pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-12"
+                >
+                    <span className="px-4 py-1.5 text-sm font-medium rounded-full bg-blue-50 text-blue-600 inline-block border border-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.2)]">
+                        Data Analysis
                     </span>
-                    <button
-                        onClick={() =>
-                            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                        }
-                        disabled={currentPage === totalPages}
-                        className={`px-4 py-2 text-white rounded ${
-                            currentPage === totalPages
-                                ? "bg-gray-400"
-                                : "bg-blue-500 hover:bg-blue-700"
-                        }`}
+                    <h1 className="text-4xl md:text-6xl font-bold mt-6 bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-transparent leading-[1.1] md:leading-[1.2] pb-1">
+                        Phishing Call Analytics
+                    </h1>
+                    <p className="text-lg mt-4 max-w-2xl mx-auto text-gray-600">
+                        Analyze employee responses to internal phishing campaign calls, helping identify training needs and strengthen organizational security
+                    </p>
+                </motion.div>
+
+                {/* Filters Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="grid lg:grid-cols-2 gap-6 mb-8"
+                >
+                    <div className="p-6 rounded-2xl border border-gray-200 bg-white shadow-lg">
+                        <h2 className="text-xl font-semibold mb-4">Filter Data</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Scenarios</label>
+                                <SelectComponent
+                                    options={scenarioOptions}
+                                    isMulti
+                                    value={scenarioOptions.filter((opt) => selectedScenarios.includes(opt.value))}
+                                    onChange={(selected: any) => {
+                                        const values = selected.map((opt: any) => opt.value);
+                                        setSelectedScenarios(values.includes("All") ? ["All"] : values);
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Names</label>
+                                <SelectComponent
+                                    options={nameOptions}
+                                    isMulti
+                                    value={nameOptions.filter((opt) => selectedNames.includes(opt.value))}
+                                    onChange={(selected: any) => {
+                                        const values = selected.map((opt: any) => opt.value);
+                                        setSelectedNames(values.includes("All") ? ["All"] : values);
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-6 rounded-2xl border border-gray-200 bg-white shadow-lg">
+                        <h2 className="text-xl font-semibold mb-4">Visualization Options</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Chart Type</label>
+                                <SelectComponent
+                                    options={chartOptions}
+                                    onChange={(selected: any) => setSelectedChart(selected?.value || "Scenario Frequency")}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Polarity Analysis</label>
+                                <SelectComponent
+                                    options={polarityChartOptions}
+                                    onChange={(selected: any) => setSelectedPolarityChart(selected?.value || "Average Polarity Comparison")}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Charts Section */}
+                <div className="grid lg:grid-cols-2 gap-6 mb-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                        className="p-6 rounded-2xl border border-gray-200 bg-white shadow-lg"
                     >
-                        Next ▶
-                    </button>
+                        <h2 className="text-xl font-semibold mb-4">Call Analytics</h2>
+                        {loading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            </div>
+                        ) : (
+                            renderChart()
+                        )}
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                        className="p-6 rounded-2xl border border-gray-200 bg-white shadow-lg"
+                    >
+                        <h2 className="text-xl font-semibold mb-4">Polarity Analysis</h2>
+                        {loading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            </div>
+                        ) : (
+                            renderPolarityChart()
+                        )}
+                    </motion.div>
                 </div>
+
+                {/* Data Table Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.5 }}
+                    className="p-6 rounded-2xl border border-gray-200 bg-white shadow-lg"
+                >
+                    <h2 className="text-lg font-semibold mb-2 text-black">Filtered Data</h2>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full bg-white border border-gray-300 text-black">
+                            <thead>
+                            <tr className="bg-gray-200 text-black">
+                                <th className="border p-2">Name</th>
+                                <th className="border p-2">Scenario</th>
+                                <th className="border p-2">Call Length (s)</th>
+                                <th className="border p-2">Response</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {paginatedData.map((row, index) => (
+                                <tr key={index} className="border text-black">
+                                    <td className="border p-2">{row["Name"]}</td>
+                                    <td className="border p-2">{row["Phishing Scenario"]}</td>
+                                    <td className="border p-2">{row["Call Length (s)"]}</td>
+                                    <td className="border p-2">{row["Response Description"]}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div className="flex justify-between items-center mt-4">
+                        <button
+                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className={`px-4 py-2 text-white rounded ${
+                                currentPage === 1
+                                    ? "bg-gray-400"
+                                    : "bg-blue-500 hover:bg-blue-700"
+                            }`}
+                        >
+                            ◀ Previous
+                        </button>
+                        <span className="text-gray-700">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <button
+                            onClick={() =>
+                                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                            }
+                            disabled={currentPage === totalPages}
+                            className={`px-4 py-2 text-white rounded ${
+                                currentPage === totalPages
+                                    ? "bg-gray-400"
+                                    : "bg-blue-500 hover:bg-blue-700"
+                            }`}
+                        >
+                            Next ▶
+                        </button>
+                    </div>
+                </motion.div>
             </div>
         </div>
     );
