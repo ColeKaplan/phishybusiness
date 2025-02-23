@@ -41,7 +41,7 @@ export async function POST(request: Request) {
                     IMPORTANT: Return only raw JSON. Do not include any additional formatting, Markdown, or text outside the JSON object.
 
                     ADDITIONAL INSTRUCTIONS:
-                    1. If the user hangs up immediately, highlight that it is a good practice to hang up early against scammers. Add this as a "bestPractice" and specify under "mistakes" and also under "risks" that no mistakes were made.
+                    1. If the user hangs up immediately, highlight that it is a good practice to hang up early against scammers. Add this as a "bestPractice" and add under "mistakes" and also under "risks" that no mistakes were made.
                     2. If the user says something that demonstrates good practice, quote what they said and highlight its effectiveness as a "bestPractice".
                     3. If the user gives in after pressure, remind them that it is okay to hang up or refuse someone on the phone. Add this as a "bestPractice" and include the risks of succumbing to pressure.
                     4. Tailor the response to the specific transcript. Be concise and actionable.`

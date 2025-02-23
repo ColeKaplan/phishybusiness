@@ -4,6 +4,21 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Papa from "papaparse";
 import { motion } from "framer-motion";
+import { Data } from "plotly.js";
+
+interface Call {
+    duration_ms: number;
+    agent_id: string;
+    transcript: string;
+    call_id: string;
+    call_analysis: {
+        in_voicemail: boolean;
+        call_summary: string;
+        user_sentiment: "Positive" | "Neutral" | "Negative";
+        custom_analysis_data: string;
+        call_successful: boolean;
+    };
+  }
 
 const csvPath = "/synthetic_calls_scenarios.csv";
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -16,14 +31,14 @@ export default function Analysis() {
     const [names, setNames] = useState<string[]>([]);
     const [selectedScenarios, setSelectedScenarios] = useState<string[]>(["All"]);
     const [selectedNames, setSelectedNames] = useState<string[]>(["All"]);
-    const [selectedChart, setSelectedChart] = useState("Scenario Frequency");
+    const [selectedChart, setSelectedChart] = useState("Success Rate by Scam Type");
     // Default polarity chart is set to "Sentiment Analysis"
     const [selectedPolarityChart, setSelectedPolarityChart] = useState("Sentiment Analysis");
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
 
     // New state to hold JSON call data
-    const [jsonData, setJsonData] = useState<any[]>([]);
+    const [jsonData, setJsonData] = useState<Call[]>([]);
 
     useEffect(() => {
         // Fetch CSV data
@@ -242,8 +257,8 @@ export default function Analysis() {
 
                 const processedData = jsonData
                     .map((item) => {
-                        if (agentMapping[item.agent_id]) {
-                            return { ...item, agent_id: agentMapping[item.agent_id] };
+                        if (item.agent_id in agentMapping) {
+                            return { ...item, agent_id: agentMapping[item.agent_id as keyof typeof agentMapping] };
                         }
                         return item;
                     })
@@ -384,18 +399,18 @@ export default function Analysis() {
                 };
                 jsonData.forEach((call) => {
                     let scamType = call.agent_id;
-                    if (agentMapping[call.agent_id]) {
-                        scamType = agentMapping[call.agent_id];
+                    if (call.agent_id in agentMapping) {
+                        scamType = agentMapping[call.agent_id as keyof typeof agentMapping];
                     }
                     if (scamTypes.includes(scamType)) {
-                        const sentiment = call.call_analysis?.user_sentiment;
+                        const sentiment = call.call_analysis.user_sentiment;
                         if (sentiment && scamSentimentCounts[scamType][sentiment] !== undefined) {
                             scamSentimentCounts[scamType][sentiment] += 1;
                         }
                     }
                 });
-                const sentiments = ["Positive", "Neutral", "Negative"];
-                const traces = sentiments.map((sentiment) => ({
+                const sentiments = Object.keys(scamSentimentCounts[scamTypes[0]]) as Array<keyof typeof scamSentimentCounts["Social Security"]>;
+                const traces : Data[] = sentiments.map((sentiment) => ({
                     type: "bar",
                     x: scamTypes,
                     y: scamTypes.map((type) => scamSentimentCounts[type][sentiment]),
@@ -427,25 +442,31 @@ export default function Analysis() {
                     .filter(call => !call.call_analysis?.call_successful)
                     .map(call => call.duration_ms / 1000);
 
+
+                const histogramTrace = {
+                    type: "histogram",
+                    x: durationsSuccessful,
+                    name: "Scam Complete",
+                    marker: { color: "lightblue" },
+                    opacity: 0.75,
+                    nbinsx: 20,
+                    } as Data;
+
+                const histogramTrace2 = {
+                    type: "histogram",
+                    x: durationsUnsuccessful,
+                    name: "Scam Prevented",
+                    marker: { color: "lightcoral" },
+                    opacity: 0.75,
+                    nbinsx: 20,
+                } as Data;
+
                 return (
+                    
                     <Plot
                         data={[
-                            {
-                                type: "histogram",
-                                x: durationsSuccessful,
-                                name: "Scam Complete",
-                                marker: { color: "lightblue" },
-                                opacity: 0.75,
-                                nbinsx: 20,
-                            },
-                            {
-                                type: "histogram",
-                                x: durationsUnsuccessful,
-                                name: "Scam Prevented",
-                                marker: { color: "lightcoral" },
-                                opacity: 0.75,
-                                nbinsx: 20,
-                            },
+                            histogramTrace,
+                            histogramTrace2,
                         ]}
                         layout={{
                             title: "Distribution of Call Durations by Call Outcome (in Seconds)",
@@ -525,16 +546,16 @@ export default function Analysis() {
                         <h2 className="text-xl font-semibold mb-4">Visualization Options</h2>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Chart Type</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Aggregate Analysis Chart</label>
                                 <SelectComponent
                                     options={chartOptions}
                                     onChange={(selected: any) =>
-                                        setSelectedChart(selected?.value || "Scenario Frequency")
+                                        setSelectedChart(selected?.value || "Success Rate by Scam Type")
                                     }
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Polarity Analysis</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Sentiment and Outcome Analysis Chart</label>
                                 <SelectComponent
                                     options={polarityChartOptions}
                                     onChange={(selected: any) =>
@@ -547,14 +568,14 @@ export default function Analysis() {
                 </motion.div>
 
                 {/* Charts Section */}
-                <div className="grid lg:grid-cols-2 gap-6 mb-8">
+                <div className="grid lg:grid-cols-2 gap-6 mb-8 min-h-60">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.3 }}
                         className="p-6 rounded-2xl border border-gray-200 bg-white shadow-lg"
                     >
-                        <h2 className="text-xl font-semibold mb-4">Call Analytics</h2>
+                        <h2 className="text-xl font-semibold mb-4">Aggregate Analysis</h2>
                         {loading ? (
                             <div className="flex items-center justify-center h-64">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -570,7 +591,7 @@ export default function Analysis() {
                         transition={{ duration: 0.6, delay: 0.4 }}
                         className="p-6 rounded-2xl border border-gray-200 bg-white shadow-lg"
                     >
-                        <h2 className="text-xl font-semibold mb-4">Polarity Analysis</h2>
+                        <h2 className="text-xl font-semibold mb-4">Sentiment and Outcome Analysis</h2>
                         {loading ? (
                             <div className="flex items-center justify-center h-64">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

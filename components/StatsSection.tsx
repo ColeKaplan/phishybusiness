@@ -23,7 +23,7 @@ const StatsSection = ({ showCards = true, showChart = true }: StatsSectionProps)
             title="Annual Losses"
             value="> $1 Trillion"
             icon={<DollarSign className="animate-pulse" />}
-            description="Total losses to phone scams in 2024 - Global Anti-Scam Alliance"
+            description="Total losses to scams in 2024 - Global Anti-Scam Alliance"
           />
           <StatCard
             title="Victims"
