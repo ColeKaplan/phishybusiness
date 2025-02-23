@@ -198,9 +198,10 @@ export default function Home() {
                     onChange={(e) => setAgentID(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg border border-black focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all duration-200"
                   >
-                    <option value="agent_a90a3d0b6f138a877d345e4e44">Select Scam</option>
                     <option value="agent_a90a3d0b6f138a877d345e4e44">Social Security</option>
                     <option value="agent_a5731a34565ef2b5c883c25add">Bank Account</option>
+                    <option value="agent_172357b1dfb5ae78e88923077c">Authentication Code</option>
+                    <option value="agent_a3d853c1f5e9f0a2e1279bac42">Raffle Winner</option>
                     {/* <option value="credit_card">Raffle Winner</option>
                     <option value="credit_card">Charity</option>
                     <option value="tech_support">Tech Support</option> */}
