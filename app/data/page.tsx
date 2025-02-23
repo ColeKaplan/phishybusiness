@@ -17,6 +17,7 @@ export default function Analysis() {
     const [selectedScenarios, setSelectedScenarios] = useState<string[]>(["All"]);
     const [selectedNames, setSelectedNames] = useState<string[]>(["All"]);
     const [selectedChart, setSelectedChart] = useState("Scenario Frequency");
+    // Default polarity chart is set to "Sentiment Analysis"
     const [selectedPolarityChart, setSelectedPolarityChart] = useState("Sentiment Analysis");
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10;
@@ -25,7 +26,7 @@ export default function Analysis() {
     const [jsonData, setJsonData] = useState<any[]>([]);
 
     useEffect(() => {
-        // Fetch CSV data as before
+        // Fetch CSV data
         fetch(csvPath)
             .then((response) => response.text())
             .then((csvText) => {
@@ -53,7 +54,7 @@ export default function Analysis() {
                 setLoading(false);
             });
 
-        // Fetch JSON call data for sentiment and keyword analysis
+        // Fetch JSON call data for sentiment, keyword, and duration analysis
         fetch("/callData.json")
             .then((response) => response.json())
             .then((json) => {
@@ -109,10 +110,13 @@ export default function Analysis() {
         { value: "Call Length Distribution", label: "📞 Call Length Distribution" },
         { value: "Response Type Distribution", label: "🎭 Response Type Distribution" },
         { value: "Top Responses", label: "💬 Top Responses" },
+        { value: "Success Rate by Scam Type", label: "✅ Success Rate by Scam Type" },
     ];
     const polarityChartOptions = [
         { value: "Sentiment Analysis", label: "💬 Sentiment Analysis" },
         { value: "Keyword Frequency", label: "🔑 Keyword Frequency" },
+        { value: "Sentiment by Scam Type", label: "💬 Sentiment by Scam Type" },
+        { value: "Call Duration by Outcome", label: "⏱ Call Duration by Outcome" },
     ];
 
     const renderChart = () => {
@@ -224,6 +228,64 @@ export default function Analysis() {
                         }}
                     />
                 );
+            case "Success Rate by Scam Type": {
+                if (!jsonData || jsonData.length === 0) return <div>Loading JSON data...</div>;
+
+                // Map agent IDs to scam types
+                const agentMapping = {
+                    "agent_a90a3d0b6f138a877d345e4e44": "Social Security",
+                    "agent_a5731a34565ef2b5c883c25add": "Bank Account",
+                    "agent_172357b1dfb5ae78e88923077c": "Cancer Treatment",
+                    "agent_a3d853c1f5e9f0a2e1279bac42": "Raffle Winner",
+                };
+                const allowedScamTypes = ["Social Security", "Bank Account", "Cancer Treatment", "Raffle Winner"];
+
+                const processedData = jsonData
+                    .map((item) => {
+                        if (agentMapping[item.agent_id]) {
+                            return { ...item, agent_id: agentMapping[item.agent_id] };
+                        }
+                        return item;
+                    })
+                    .filter((item) => allowedScamTypes.includes(item.agent_id));
+
+                // Calculate success rate for each scam type
+                const successRates: Record<string, { total: number; successCount: number }> = {};
+                processedData.forEach((item) => {
+                    const scamType = item.agent_id;
+                    const success = item.call_analysis && item.call_analysis.call_successful;
+                    if (!successRates[scamType]) {
+                        successRates[scamType] = { total: 0, successCount: 0 };
+                    }
+                    successRates[scamType].total += 1;
+                    if (success) successRates[scamType].successCount += 1;
+                });
+                const scamTypes = Object.keys(successRates);
+                const percentages = scamTypes.map(
+                    (type) => (successRates[type].successCount / successRates[type].total) * 100
+                );
+
+                return (
+                    <Plot
+                        data={[
+                            {
+                                type: "bar",
+                                x: scamTypes,
+                                y: percentages,
+                                marker: { color: "lightcoral" },
+                            },
+                        ]}
+                        layout={{
+                            title: "Success Rate by Scam Type",
+                            xaxis: { title: "Scam Type" },
+                            yaxis: { title: "Success Rate (%)", range: [0, 100] },
+                            margin: { l: 50, r: 50, b: 100, t: 50 },
+                        }}
+                        style={{ width: "100%", height: "100%" }}
+                        useResizeHandler={true}
+                    />
+                );
+            }
             default:
                 return null;
         }
@@ -235,7 +297,6 @@ export default function Analysis() {
 
         switch (selectedPolarityChart) {
             case "Sentiment Analysis": {
-                // Calculate frequency counts of user sentiment from JSON call data
                 const sentimentCounts = jsonData.reduce((acc: Record<string, number>, call) => {
                     const sentiment = call.call_analysis?.user_sentiment;
                     if (sentiment) {
@@ -243,7 +304,6 @@ export default function Analysis() {
                     }
                     return acc;
                 }, {});
-
                 const sentiments = Object.keys(sentimentCounts);
                 const counts = sentiments.map((sent) => sentimentCounts[sent]);
 
@@ -269,12 +329,9 @@ export default function Analysis() {
                 );
             }
             case "Keyword Frequency": {
-                // Aggregate all transcripts from JSON call data
                 const allText = jsonData.map((call) => call.transcript).join(" ");
-                // Clean the text by removing punctuation and converting to lowercase
                 const cleanedText = allText.replace(/[^\w\s]/gi, "").toLowerCase();
                 const words = cleanedText.split(/\s+/);
-                // Define simple stop words to ignore
                 const stopWords = new Set([
                     "the", "and", "for", "a", "an", "of", "to", "in", "is", "it", "that",
                     "this", "with", "as", "on", "was", "but", "are", "i", "you", "we", "they",
@@ -286,7 +343,6 @@ export default function Analysis() {
                         wordCounts[word] = (wordCounts[word] || 0) + 1;
                     }
                 });
-                // Get top 10 most frequent words
                 const sortedWords = Object.entries(wordCounts)
                     .sort((a, b) => b[1] - a[1])
                     .slice(0, 10);
@@ -307,6 +363,95 @@ export default function Analysis() {
                             title: "Keyword Frequency",
                             xaxis: { title: "Keywords" },
                             yaxis: { title: "Frequency" },
+                            margin: { l: 50, r: 50, b: 100, t: 50 },
+                        }}
+                        style={{ width: "100%", height: "100%" }}
+                        useResizeHandler={true}
+                    />
+                );
+            }
+            case "Sentiment by Scam Type": {
+                const scamTypes = ["Social Security", "Bank Account", "Cancer Treatment", "Raffle Winner"];
+                const scamSentimentCounts: Record<string, { Positive: number; Neutral: number; Negative: number }> = {};
+                scamTypes.forEach((type) => {
+                    scamSentimentCounts[type] = { Positive: 0, Neutral: 0, Negative: 0 };
+                });
+                const agentMapping = {
+                    "agent_a90a3d0b6f138a877d345e4e44": "Social Security",
+                    "agent_a5731a34565ef2b5c883c25add": "Bank Account",
+                    "agent_172357b1dfb5ae78e88923077c": "Cancer Treatment",
+                    "agent_a3d853c1f5e9f0a2e1279bac42": "Raffle Winner",
+                };
+                jsonData.forEach((call) => {
+                    let scamType = call.agent_id;
+                    if (agentMapping[call.agent_id]) {
+                        scamType = agentMapping[call.agent_id];
+                    }
+                    if (scamTypes.includes(scamType)) {
+                        const sentiment = call.call_analysis?.user_sentiment;
+                        if (sentiment && scamSentimentCounts[scamType][sentiment] !== undefined) {
+                            scamSentimentCounts[scamType][sentiment] += 1;
+                        }
+                    }
+                });
+                const sentiments = ["Positive", "Neutral", "Negative"];
+                const traces = sentiments.map((sentiment) => ({
+                    type: "bar",
+                    x: scamTypes,
+                    y: scamTypes.map((type) => scamSentimentCounts[type][sentiment]),
+                    name: sentiment,
+                }));
+
+                return (
+                    <Plot
+                        data={traces}
+                        layout={{
+                            title: "Sentiment by Scam Type",
+                            barmode: "group",
+                            xaxis: { title: "Scam Type" },
+                            yaxis: { title: "Count" },
+                            margin: { l: 50, r: 50, b: 50, t: 50 },
+                        }}
+                        style={{ width: "100%", height: "100%" }}
+                        useResizeHandler={true}
+                    />
+                );
+            }
+            case "Call Duration by Outcome": {
+                if (!jsonData || jsonData.length === 0) return <div>Loading JSON charts...</div>;
+
+                const durationsSuccessful = jsonData
+                    .filter(call => call.call_analysis?.call_successful)
+                    .map(call => call.duration_ms / 1000);
+                const durationsUnsuccessful = jsonData
+                    .filter(call => !call.call_analysis?.call_successful)
+                    .map(call => call.duration_ms / 1000);
+
+                return (
+                    <Plot
+                        data={[
+                            {
+                                type: "histogram",
+                                x: durationsSuccessful,
+                                name: "Scam Complete (Successful)",
+                                marker: { color: "lightblue" },
+                                opacity: 0.75,
+                                nbinsx: 20,
+                            },
+                            {
+                                type: "histogram",
+                                x: durationsUnsuccessful,
+                                name: "Scam Prevented (Unsuccessful)",
+                                marker: { color: "lightcoral" },
+                                opacity: 0.75,
+                                nbinsx: 20,
+                            },
+                        ]}
+                        layout={{
+                            title: "Distribution of Call Durations by Call Outcome (in Seconds)",
+                            xaxis: { title: "Call Duration (Seconds)" },
+                            yaxis: { title: "Frequency" },
+                            barmode: "overlay",
                             margin: { l: 50, r: 50, b: 100, t: 50 },
                         }}
                         style={{ width: "100%", height: "100%" }}
@@ -383,14 +528,18 @@ export default function Analysis() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Chart Type</label>
                                 <SelectComponent
                                     options={chartOptions}
-                                    onChange={(selected: any) => setSelectedChart(selected?.value || "Scenario Frequency")}
+                                    onChange={(selected: any) =>
+                                        setSelectedChart(selected?.value || "Scenario Frequency")
+                                    }
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Polarity Analysis</label>
                                 <SelectComponent
                                     options={polarityChartOptions}
-                                    onChange={(selected: any) => setSelectedPolarityChart(selected?.value || "Sentiment Analysis")}
+                                    onChange={(selected: any) =>
+                                        setSelectedPolarityChart(selected?.value || "Sentiment Analysis")
+                                    }
                                 />
                             </div>
                         </div>
