@@ -19,7 +19,7 @@ const Analysis = ({ callDetails }: { callDetails: CallDetails }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        console.log("we are in the useeffect again")
+        console.log(callDetails.transcript)
         getAnalysis(callDetails.transcript);
     }, []);
 
