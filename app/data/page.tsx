@@ -433,7 +433,7 @@ export default function Analysis() {
                             {
                                 type: "histogram",
                                 x: durationsSuccessful,
-                                name: "Scam Complete (Successful)",
+                                name: "Scam Complete",
                                 marker: { color: "lightblue" },
                                 opacity: 0.75,
                                 nbinsx: 20,
@@ -441,7 +441,7 @@ export default function Analysis() {
                             {
                                 type: "histogram",
                                 x: durationsUnsuccessful,
-                                name: "Scam Prevented (Unsuccessful)",
+                                name: "Scam Prevented",
                                 marker: { color: "lightcoral" },
                                 opacity: 0.75,
                                 nbinsx: 20,
